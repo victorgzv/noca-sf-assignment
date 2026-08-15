@@ -11,12 +11,14 @@ function App() {
     accounts,
     page,
     pageSize,
+    search,
     totalSize,
     totalPages,
     loading,
     error,
     setPage,
     changePageSize,
+    setSearch,
     goToFirstPage,
     reload,
   } = useAccounts()
@@ -35,6 +37,16 @@ function App() {
     <div className="page">
       <header className="page-header">
         <h1>Accounts</h1>
+        <label className="search-label">
+          <span className="sr-only">Search by name</span>
+          <input
+            type="search"
+            className="search-input"
+            placeholder="Search by name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
         <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
           New Account
         </button>

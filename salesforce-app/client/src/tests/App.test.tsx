@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import * as accountsApi from '../api/accounts'
@@ -67,6 +67,32 @@ describe('App', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     )
-    expect(fetchSpy).toHaveBeenCalledWith(1, 10)
+    expect(fetchSpy).toHaveBeenCalledWith(1, 10, '')
+  })
+
+  it('debounces the search box before refetching', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const fetchSpy = vi.spyOn(accountsApi, 'fetchAccounts').mockResolvedValue({
+      records: [account('1', 'Acme Corp')],
+      page: 1,
+      pageSize: 10,
+      totalSize: 1,
+      totalPages: 1,
+    })
+
+    render(<App />)
+    await screen.findByText('Acme Corp')
+    fetchSpy.mockClear()
+
+    await user.type(screen.getByPlaceholderText('Search by name…'), 'Acme')
+    expect(fetchSpy).not.toHaveBeenCalled()
+
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(1, 10, 'Acme'))
+    vi.useRealTimers()
   })
 })

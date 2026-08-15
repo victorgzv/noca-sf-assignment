@@ -36,6 +36,24 @@ describe('fetchAccounts', () => {
 
     await expect(fetchAccounts(1, 10)).rejects.toThrow('authentication failure')
   })
+
+  it('URL-encodes and includes the search term when given', async () => {
+    const payload = { records: [], page: 1, pageSize: 10, totalSize: 0, totalPages: 1 }
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(payload))
+
+    await fetchAccounts(1, 10, 'Acme & Co')
+
+    expect(fetch).toHaveBeenCalledWith('/accounts?page=1&pageSize=10&search=Acme+%26+Co')
+  })
+
+  it('omits the search param when the search term is empty', async () => {
+    const payload = { records: [], page: 1, pageSize: 10, totalSize: 0, totalPages: 1 }
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(payload))
+
+    await fetchAccounts(1, 10, '')
+
+    expect(fetch).toHaveBeenCalledWith('/accounts?page=1&pageSize=10')
+  })
 })
 
 describe('createAccount', () => {

@@ -12,8 +12,14 @@ function extractErrorMessage(payload: ApiErrorPayload, fallback: string): string
   return payload.error || fallback
 }
 
-export async function fetchAccounts(page: number, pageSize: number): Promise<AccountsResponse> {
-  const res = await fetch(`/accounts?page=${page}&pageSize=${pageSize}`)
+export async function fetchAccounts(
+  page: number,
+  pageSize: number,
+  search = ''
+): Promise<AccountsResponse> {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  if (search) params.set('search', search)
+  const res = await fetch(`/accounts?${params.toString()}`)
   const data = await res.json()
   if (!res.ok) {
     throw new Error(extractErrorMessage(data, 'Failed to load accounts'))
