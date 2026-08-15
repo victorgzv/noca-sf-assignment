@@ -3,14 +3,31 @@ const { getConnection } = require('../salesforce');
 
 const router = express.Router();
 
-// GET /accounts - fetch all accounts
+// GET /accounts - fetch a page of accounts
 router.get('/', async (req, res) => {
   try {
-    const conn = await getConnection();
-    const result = await conn.query(
-      'SELECT Id, Name, Industry, Phone, Website, BillingCity, BillingCountry FROM Account LIMIT 200'
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize, 10) || 10)
     );
-    res.json({ records: result.records, totalSize: result.totalSize });
+    const offset = (page - 1) * pageSize;
+
+    const conn = await getConnection();
+    const [countResult, pageResult] = await Promise.all([
+      conn.query('SELECT COUNT() FROM Account'),
+      conn.query(
+        `SELECT Id, Name, Industry, Phone, Website, BillingCity, BillingCountry FROM Account ORDER BY Name LIMIT ${pageSize} OFFSET ${offset}`
+      ),
+    ]);
+
+    res.json({
+      records: pageResult.records,
+      page,
+      pageSize,
+      totalSize: countResult.totalSize,
+      totalPages: Math.max(1, Math.ceil(countResult.totalSize / pageSize)),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
