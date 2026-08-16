@@ -4,6 +4,7 @@ import { AccountsTable } from './components/AccountsTable'
 import { Pagination } from './components/Pagination'
 import { NewAccountModal } from './components/NewAccountModal'
 import { ErrorBanner } from './components/ErrorBanner'
+import { ThemeToggle } from './components/ThemeToggle'
 import './App.css'
 
 function App() {
@@ -35,9 +36,12 @@ function App() {
     <div className="page">
       <header className="page-header">
         <h1>Accounts</h1>
-        <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-          New Account
-        </button>
+        <div className="page-header-actions">
+          <ThemeToggle />
+          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+            New Account
+          </button>
+        </div>
       </header>
 
       {error && <ErrorBanner message={error} />}
