@@ -67,4 +67,26 @@ async function getConnection() {
   return connection;
 }
 
-module.exports = { getConnection };
+function isInvalidSessionError(err) {
+  return (
+    err.name === 'INVALID_SESSION_ID' ||
+    err.errorCode === 'INVALID_SESSION_ID' ||
+    /session expired or invalid/i.test(err.message || '')
+  );
+}
+
+async function withConnection(fn) {
+  const conn = await getConnection();
+  try {
+    return await fn(conn);
+  } catch (err) {
+    if (!isInvalidSessionError(err)) {
+      throw err;
+    }
+    connection = null;
+    const freshConn = await getConnection();
+    return fn(freshConn);
+  }
+}
+
+module.exports = { getConnection, withConnection };

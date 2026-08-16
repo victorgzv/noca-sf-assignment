@@ -1,5 +1,5 @@
 const express = require('express');
-const { getConnection } = require('../salesforce');
+const { withConnection } = require('../salesforce');
 
 const router = express.Router();
 
@@ -13,13 +13,14 @@ router.get('/', async (req, res) => {
     );
     const offset = (page - 1) * pageSize;
 
-    const conn = await getConnection();
-    const [countResult, pageResult] = await Promise.all([
-      conn.query('SELECT COUNT() FROM Account'),
-      conn.query(
-        `SELECT Id, Name, Industry, Phone, Website, BillingCity, BillingCountry FROM Account ORDER BY Name LIMIT ${pageSize} OFFSET ${offset}`
-      ),
-    ]);
+    const [countResult, pageResult] = await withConnection((conn) =>
+      Promise.all([
+        conn.query('SELECT COUNT() FROM Account'),
+        conn.query(
+          `SELECT Id, Name, Industry, Phone, Website, BillingCity, BillingCountry FROM Account ORDER BY Name LIMIT ${pageSize} OFFSET ${offset}`
+        ),
+      ])
+    );
 
     res.json({
       records: pageResult.records,
@@ -36,8 +37,9 @@ router.get('/', async (req, res) => {
 // POST /accounts - create a new account
 router.post('/', async (req, res) => {
   try {
-    const conn = await getConnection();
-    const result = await conn.sobject('Account').create(req.body);
+    const result = await withConnection((conn) =>
+      conn.sobject('Account').create(req.body)
+    );
     if (!result.success) {
       return res.status(400).json({ errors: result.errors });
     }
